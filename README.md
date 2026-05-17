@@ -1,4 +1,4 @@
-# Harvest Grove
+﻿# Harvest Grove
 
 Harvest Grove is a Unity farming game prototype focused on planting, growing, and managing crops in a small 2D farm environment.
 
@@ -41,10 +41,7 @@ ProjectSettings/
 4. Open a scene from Assets/.
 5. Press Play in the Unity Editor.
 
-## Status
-
-Prototype / learning Unity project.
-
 ## Notes
 
 This project focuses on Unity gameplay systems, project structure, and basic farming-game mechanics.
+
