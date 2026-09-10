@@ -1,47 +1,75 @@
-﻿# Harvest Grove
+# 🌱 Harvest Grove
 
-Harvest Grove is a Unity farming game prototype focused on planting, growing, and managing crops in a small 2D farm environment.
+**Harvest Grove** is a 2D farming game prototype developed with **Unity and C#**.
 
-## Overview
+The project demonstrates my practical experience working with Unity gameplay systems, UI, prefabs, ScriptableObjects, interaction logic and basic game economy systems.
 
-The project demonstrates core farming-game mechanics in Unity, including crop plots, plant items, store logic, plant data objects, and an isometric-style visual setup.
+## 🎮 Gameplay Systems
 
-## Features
-
-- Planting system
-- Crop plot interaction
-- Plant item data
-- Store manager logic
+- Planting crops
+- Multiple crop growth stages
+- Harvesting
+- Watering farm plots
+- Fertilizer / growth-speed mechanics
+- Purchasing additional farm plots
+- Store system
+- Currency system
+- Plant selection
+- Interactive farm plots
 - Isometric object sorting
-- Unity prefab-based structure
-- 2D farming-game visual style
 
-## Tech Stack
+## 🧩 Unity Systems Used
+
+- GameObjects & Components
+- MonoBehaviour
+- Prefabs
+- ScriptableObjects
+- SpriteRenderer
+- BoxCollider2D
+- Unity UI
+- TextMesh Pro
+- Mouse interaction
+- Time-based gameplay logic
+
+## 🌾 ScriptableObject Plant System
+
+Plant data is stored using **ScriptableObjects**.
+
+Each plant can contain:
+
+- Growth-stage sprites
+- Growth time
+- Buy price
+- Sell price
+
+This separates gameplay data from logic and makes different crop types easier to create and configure.
+
+## 💰 Gameplay Loop
+
+1. Select a crop
+2. Purchase and plant it
+3. Water the farm plot
+4. Wait for the crop to grow
+5. Use fertilizer if needed
+6. Harvest the crop
+7. Receive currency
+8. Purchase more crops or farm plots
+
+## 🛠 Technologies
 
 - Unity
 - C#
-- 2D Game Development
-- Unity Prefabs
-- Scriptable Objects
+- ScriptableObjects
+- Prefabs
 - TextMesh Pro
+- Unity 2D Physics
 
-## Project Structure
+## 🎯 What I Learned
 
-`	ext
-Assets/
-Packages/
-ProjectSettings/
-`
+This project gave me practical experience working inside a real-time game engine and helped me understand how game assets, UI, gameplay logic, data and interactions work together in a Unity project.
 
-## How to Run
+---
 
-1. Clone this repository.
-2. Open the project folder in Unity Hub.
-3. Use the Unity version listed in ProjectSettings/ProjectVersion.txt if possible.
-4. Open a scene from Assets/.
-5. Press Play in the Unity Editor.
+🎨 [3D Art Portfolio](https://dima-nesvitailo.artstation.com)
 
-## Notes
-
-This project focuses on Unity gameplay systems, project structure, and basic farming-game mechanics.
-
+👤 [GitHub Profile](https://github.com/dima1sik)
