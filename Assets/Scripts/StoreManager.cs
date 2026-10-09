@@ -1,35 +1,38 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class StoreManager : MonoBehaviour
 {
     public GameObject plantItem;
-    List<PlantObject> plantObjects = new List<PlantObject>();
+
     private void Awake()
     {
-        //Assets/Resources/Plants
-        var loadPlants = Resources.LoadAll("Plants", typeof(PlantObject));
-        foreach (var plant in loadPlants)
+        if (plantItem == null || plantItem.GetComponent<PlantItem>() == null)
         {
-            plantObjects.Add((PlantObject)plant);
+            Debug.LogError("StoreManager requires a prefab with a PlantItem component.", this);
+            enabled = false;
+            return;
         }
-        plantObjects.Sort(SortByPrice);
 
-        foreach (var plant in plantObjects)
+        var plants = new List<PlantObject>();
+        foreach (PlantObject crop in Resources.LoadAll<PlantObject>("Plants"))
         {
-            PlantItem newPlant = Instantiate(plantItem, transform).GetComponent<PlantItem>();
-            newPlant.plant = plant;
+            if (crop.IsValid())
+                plants.Add(crop);
+            else
+                Debug.LogWarning("Skipping invalid crop asset: " + crop.name, crop);
         }
-    }
 
-    int SortByPrice(PlantObject plantObject1, PlantObject plantObject2)
-    {
-        return plantObject1.buyPrice.CompareTo(plantObject2.buyPrice);
-    }
+        plants.Sort((left, right) =>
+        {
+            int priceComparison = left.buyPrice.CompareTo(right.buyPrice);
+            return priceComparison != 0
+                ? priceComparison
+                : string.Compare(left.plantName, right.plantName, StringComparison.Ordinal);
+        });
 
-    int SortByTime(PlantObject plantObject1, PlantObject plantObject2)
-    {
-        return plantObject1.timeBtwStages.CompareTo(plantObject2.timeBtwStages);
+        foreach (PlantObject crop in plants)
+            Instantiate(plantItem, transform).GetComponent<PlantItem>().plant = crop;
     }
 }

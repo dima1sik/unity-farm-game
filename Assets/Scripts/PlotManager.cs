@@ -1,202 +1,214 @@
-﻿﻿using System.Collections;
-using System.Collections.Generic;
+using HarvestGrove.Gameplay;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class PlotManager : MonoBehaviour
 {
-
-    bool isPlanted = false;
-    SpriteRenderer plant;
-    BoxCollider2D plantCollider;
-
-    int plantStage = 0;
-    float timer;
+    private const int WaterTool = 1;
+    private const int FertilizerTool = 2;
+    private const int BuyPlotTool = 3;
 
     public Color availableColor = Color.green;
     public Color unavailableColor = Color.red;
-
-    SpriteRenderer plot;
-
-
-    PlantObject selectedPlant;
-
-    FarmManager fm;
-
-    bool isDry = true;
     public Sprite drySprite;
     public Sprite normalSprite;
     public Sprite unavailableSprite;
+    public bool isBought = true;
 
-    float speed=1f;
-    public bool isBought=true;
+    private SpriteRenderer plant;
+    private BoxCollider2D plantCollider;
+    private SpriteRenderer plot;
+    private PlantObject selectedPlant;
+    private FarmManager farm;
+    private CropGrowth growth;
+    private bool isDry = true;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        plant = transform.GetChild(0).GetComponent<SpriteRenderer>();
-        plantCollider = transform.GetChild(0).GetComponent<BoxCollider2D>();
-        fm = transform.parent.GetComponent<FarmManager>();
         plot = GetComponent<SpriteRenderer>();
-        if (isBought)
+        farm = GetComponentInParent<FarmManager>();
+        if (transform.childCount > 0)
         {
-            plot.sprite = drySprite;
+            Transform crop = transform.GetChild(0);
+            plant = crop.GetComponent<SpriteRenderer>();
+            plantCollider = crop.GetComponent<BoxCollider2D>();
         }
-        else
+
+        if (plot == null || farm == null || plant == null || plantCollider == null ||
+            drySprite == null || normalSprite == null || unavailableSprite == null)
         {
-            plot.sprite = unavailableSprite;
+            Debug.LogError("PlotManager requires a farm, plot sprites and a crop child with a renderer and collider.", this);
+            enabled = false;
+            return;
         }
-        
+
+        // Unity sends mouse callbacks to the clicked collider's object, not its parent.
+        PlotClickTarget clickTarget = plantCollider.GetComponent<PlotClickTarget>();
+        if (clickTarget == null)
+            clickTarget = plantCollider.gameObject.AddComponent<PlotClickTarget>();
+        clickTarget.Owner = this;
+
+        plant.gameObject.SetActive(false);
+        plot.sprite = isBought ? drySprite : unavailableSprite;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (isPlanted && !isDry)
-        {
-            timer -= speed*Time.deltaTime;
-
-            if (timer < 0 && plantStage<selectedPlant.plantStages.Length-1)
-            {
-                timer = selectedPlant.timeBtwStages;
-                plantStage++;
-                UpdatePlant();
-            }
-        }
+        if (growth != null && growth.Advance(Time.deltaTime))
+            UpdatePlant();
     }
 
     private void OnMouseDown()
     {
-        if (isPlanted)
-        {
-            if (plantStage == selectedPlant.plantStages.Length - 1 && !fm.isPlanting && !fm.isSelecting)
-            {
-                Harvest();
-            }
-        }
-        else if(fm.isPlanting && fm.selectPlant.plant.buyPrice <= fm.money && isBought)
-        {
-            Plant(fm.selectPlant.plant);
-        }
-        if (fm.isSelecting)
-        {
-            switch (fm.selectedTool)
-            {
-                case 1:
-                    if (isBought) {
-                        isDry = false;
-                        plot.sprite = normalSprite;
-                        if (isPlanted) UpdatePlant();
-                    }
-                    break;
-                case 2:
-                    if (fm.money>=10 && isBought)
-                    {
-                        fm.Transaction(-10);
-                        if (speed < 2) speed += .2f;
-                    }
-                    break;
-                case 3:
-                    if (fm.money >= 100 && !isBought)
-                    {
-                        fm.Transaction(-100);
-                        isBought = true;
-                        plot.sprite = drySprite;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
+        HandleClick();
     }
 
     private void OnMouseOver()
     {
-        if (fm.isPlanting)
-        {
-            if(isPlanted || fm.selectPlant.plant.buyPrice > fm.money || !isBought)
-            {
-                //can't buy
-                plot.color = unavailableColor;
-            }
-            else
-            {
-                //can buy
-                plot.color = availableColor;
-            }
-        }
-        if (fm.isSelecting)
-        {
-            switch (fm.selectedTool)
-            {
-                case 1:
-                case 2:
-                    if (isBought && fm.money>=(fm.selectedTool-1)*10)
-                    {
-                        plot.color = availableColor;
-                    }
-                    else
-                    {
-                        plot.color = unavailableColor;
-                    }
-                    break;
-                case 3:
-                    if (!isBought && fm.money>=100)
-                    {
-                        plot.color = availableColor;
-                    }
-                    else
-                    {
-                        plot.color = unavailableColor;
-                    }
-                    break;
-                default:
-                    plot.color = unavailableColor;
-                    break;
-            }
-        }
+        HandleHover();
     }
 
     private void OnMouseExit()
     {
-        plot.color = Color.white;
+        ClearHover();
     }
 
-
-    void Harvest()
+    public void HandleClick()
     {
-        isPlanted = false;
+        if (!enabled || farm == null || IsPointerOverUI())
+            return;
+
+        if (farm.isSelecting)
+        {
+            UseTool();
+            return;
+        }
+
+        if (farm.isPlanting)
+        {
+            if (CanPlant())
+                Plant(farm.selectPlant.plant);
+            return;
+        }
+
+        if (growth != null && growth.IsMature)
+            Harvest();
+    }
+
+    public void HandleHover()
+    {
+        if (!enabled || farm == null || plot == null)
+            return;
+
+        if (IsPointerOverUI())
+        {
+            ClearHover();
+            return;
+        }
+
+        bool hasSelection = farm.isPlanting || farm.isSelecting;
+        bool available = farm.isSelecting ? CanUseTool() : CanPlant();
+        plot.color = hasSelection ? (available ? availableColor : unavailableColor) : Color.white;
+    }
+
+    public void ClearHover()
+    {
+        if (plot != null)
+            plot.color = Color.white;
+    }
+
+    private bool CanPlant()
+    {
+        return isBought && growth == null && farm.selectPlant != null &&
+            farm.selectPlant.plant != null && farm.selectPlant.plant.IsValid() &&
+            farm.CanAfford(farm.selectPlant.plant.buyPrice);
+    }
+
+    private bool CanUseTool()
+    {
+        switch (farm.selectedTool)
+        {
+            case WaterTool:
+                return isBought && isDry;
+            case FertilizerTool:
+                return isBought && growth != null && growth.CanFertilize &&
+                    farm.CanAfford(FarmEconomy.FertilizerPrice);
+            case BuyPlotTool:
+                return !isBought && farm.CanAfford(FarmEconomy.PlotPrice);
+            default:
+                return false;
+        }
+    }
+
+    private void UseTool()
+    {
+        if (!CanUseTool())
+            return;
+
+        switch (farm.selectedTool)
+        {
+            case WaterTool:
+                isDry = false;
+                plot.sprite = normalSprite;
+                if (growth != null)
+                {
+                    growth.Water();
+                    UpdatePlant();
+                }
+                break;
+            case FertilizerTool:
+                if (farm.TrySpend(FarmEconomy.FertilizerPrice))
+                    growth.ApplyFertilizer();
+                break;
+            case BuyPlotTool:
+                if (farm.TrySpend(FarmEconomy.PlotPrice))
+                {
+                    isBought = true;
+                    isDry = true;
+                    plot.sprite = drySprite;
+                }
+                break;
+        }
+    }
+
+    private void Harvest()
+    {
+        // Keep the crop if its payout would overflow the balance.
+        if (!farm.TryTransaction(selectedPlant.sellPrice))
+            return;
+
+        growth = null;
+        selectedPlant = null;
         plant.gameObject.SetActive(false);
-        fm.Transaction(selectedPlant.sellPrice);
         isDry = true;
         plot.sprite = drySprite;
-        speed = 1f;
     }
 
-    void Plant(PlantObject newPlant)
+    private void Plant(PlantObject newPlant)
     {
+        if (!farm.TrySpend(newPlant.buyPrice))
+            return;
+
         selectedPlant = newPlant;
-        isPlanted = true;
+        growth = new CropGrowth(newPlant.plantStages.Length, newPlant.timeBtwStages);
+        if (!isDry)
+            growth.Water();
 
-        fm.Transaction(-selectedPlant.buyPrice);
-
-        plantStage = 0;
         UpdatePlant();
-        timer = selectedPlant.timeBtwStages;
         plant.gameObject.SetActive(true);
     }
 
-    void UpdatePlant()
+    private void UpdatePlant()
     {
-        if (isDry)
-        {
-            plant.sprite = selectedPlant.dryPlanted;
-        }
-        else
-        {
-            plant.sprite = selectedPlant.plantStages[plantStage];
-        }
-        plantCollider.size = plant.sprite.bounds.size;
-        plantCollider.offset = new Vector2(0,plant.bounds.size.y/2);
+        Sprite sprite = isDry ? selectedPlant.dryPlanted : selectedPlant.plantStages[growth.Stage];
+        plant.sprite = sprite;
+        // Collider dimensions are local to the sprite, independent of transform scale.
+        plantCollider.size = sprite.bounds.size;
+        plantCollider.offset = sprite.bounds.center;
     }
 
+    private static bool IsPointerOverUI()
+    {
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    }
 }

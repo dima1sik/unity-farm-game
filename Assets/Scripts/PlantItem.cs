@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,34 +5,42 @@ using UnityEngine.UI;
 public class PlantItem : MonoBehaviour
 {
     public PlantObject plant;
-
     public TextMeshProUGUI nameTxt;
     public TextMeshProUGUI priceTxt;
     public Image icon;
-
     public Image btnImage;
     public TextMeshProUGUI btnTxt;
 
-    FarmManager fm;
+    private FarmManager farm;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        fm = FindObjectOfType<FarmManager>();
-        InitializeUI();
+        farm = FindObjectOfType<FarmManager>();
+        if (farm == null || plant == null || !plant.IsValid() || nameTxt == null ||
+            priceTxt == null || icon == null || btnImage == null || btnTxt == null)
+        {
+            Debug.LogError("PlantItem requires a valid crop, farm manager and UI references.", this);
+            enabled = false;
+            return;
+        }
+
+        nameTxt.text = plant.plantName;
+        priceTxt.text = "$" + plant.buyPrice;
+        icon.sprite = plant.icon;
+        SetSelected(false, farm.buyColor);
     }
 
     public void BuyPlant()
     {
-        Debug.Log("Bought " + plant.plantName);
-        fm.SelectPlant(this);
+        if (enabled && farm != null)
+            farm.SelectPlant(this);
     }
 
-    void InitializeUI()
+    public void SetSelected(bool selected, Color color)
     {
-        nameTxt.text = plant.plantName;
-        priceTxt.text = "$" + plant.buyPrice;
-        icon.sprite = plant.icon;
+        if (btnImage != null)
+            btnImage.color = color;
+        if (btnTxt != null)
+            btnTxt.text = selected ? "Cancel" : "Buy";
     }
-
 }
