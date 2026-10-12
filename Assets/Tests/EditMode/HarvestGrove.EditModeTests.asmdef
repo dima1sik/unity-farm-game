@@ -1,0 +1,7 @@
+{
+    "name": "HarvestGrove.EditModeTests",
+    "references": ["HarvestGrove.Gameplay"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "noEngineReferences": true
+}

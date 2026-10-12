@@ -1,7 +1,8 @@
-﻿# Unity generated folders
+# Unity generated folders
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
+[Bb]in/
 [Bb]uild/
 [Bb]uilds/
 [Ll]ogs/
@@ -31,3 +32,7 @@ Thumbs.db
 *.aab
 *.exe
 *.dll
+
+# Standalone gameplay tests
+!Tests/Gameplay/Gameplay.Tests.csproj
+TestResults/

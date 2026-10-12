@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using HarvestGrove.Gameplay;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,88 +6,95 @@ using UnityEngine.UI;
 public class FarmManager : MonoBehaviour
 {
     public PlantItem selectPlant;
-    public bool isPlanting = false;
-    public int money=100;
+    public bool isPlanting;
+    public int money = 100;
     public TextMeshProUGUI moneyTxt;
 
     public Color buyColor = Color.green;
     public Color cancelColor = Color.red;
 
-    public bool isSelecting = false;
-    public int selectedTool=0;
-    // 1- water 2- Fertilizer 3- Buy plot
-
+    public bool isSelecting;
+    // Tool numbers match the existing UI button callbacks.
+    public int selectedTool;
     public Image[] buttonsImg;
     public Sprite normalButton;
     public Sprite selectedButton;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        moneyTxt.text = "$" + money;
+        money = Mathf.Max(0, money);
+        ClearSelection();
+        UpdateMoneyText();
     }
 
     public void SelectPlant(PlantItem newPlant)
     {
-        if(selectPlant == newPlant)
-        {
-            CheckSelection();
-            
-        }
-        else
-        {
-            CheckSelection();
-            selectPlant = newPlant;
-            selectPlant.btnImage.color = cancelColor;
-            selectPlant.btnTxt.text = "Cancel";
-            isPlanting = true;
-        }
+        if (newPlant == null || newPlant.plant == null || !newPlant.plant.IsValid())
+            return;
+
+        bool wasSelected = isPlanting && selectPlant == newPlant;
+        ClearSelection();
+        if (wasSelected)
+            return;
+
+        selectPlant = newPlant;
+        selectPlant.SetSelected(true, cancelColor);
+        isPlanting = true;
     }
 
     public void SelectTool(int toolNumber)
     {
-        if(toolNumber == selectedTool)
-        {
-            //deselect
-            CheckSelection();
-        }
-        else
-        {
-            //select tool number and check to see if anything was also selected
-            CheckSelection();
-            isSelecting = true;
-            selectedTool = toolNumber;
-            buttonsImg[toolNumber - 1].sprite = selectedButton;
-        }
+        if (toolNumber < 1 || toolNumber > 3 || buttonsImg == null ||
+            toolNumber > buttonsImg.Length || buttonsImg[toolNumber - 1] == null)
+            return;
+
+        bool wasSelected = isSelecting && selectedTool == toolNumber;
+        ClearSelection();
+        if (wasSelected)
+            return;
+
+        isSelecting = true;
+        selectedTool = toolNumber;
+        buttonsImg[toolNumber - 1].sprite = selectedButton;
     }
 
-    void CheckSelection()
+    private void ClearSelection()
     {
-        if (isPlanting)
-        {
-            isPlanting = false;
-            if (selectPlant != null)
-            {
-                selectPlant.btnImage.color = buyColor;
-                selectPlant.btnTxt.text = "Buy";
-                selectPlant = null;
-            }
-        }
-        if (isSelecting)
-        {
-            if (selectedTool > 0)
-            {
-                buttonsImg[selectedTool - 1].sprite = normalButton;
-            }
-            isSelecting = false;
-            selectedTool = 0;
-        }
+        if (selectPlant != null)
+            selectPlant.SetSelected(false, buyColor);
+        selectPlant = null;
+        isPlanting = false;
+
+        if (buttonsImg != null && selectedTool > 0 && selectedTool <= buttonsImg.Length &&
+            buttonsImg[selectedTool - 1] != null)
+            buttonsImg[selectedTool - 1].sprite = normalButton;
+        isSelecting = false;
+        selectedTool = 0;
     }
 
-    public void Transaction(int value)
+    public bool CanAfford(int price)
     {
-        money += value;
-        moneyTxt.text = "$" + money;
+        return FarmEconomy.CanAfford(money, price);
     }
 
+    public bool TrySpend(int price)
+    {
+        return CanAfford(price) && TryTransaction(-price);
+    }
+
+    public bool TryTransaction(int amount)
+    {
+        if (!FarmEconomy.TryTransaction(money, amount, out int newBalance))
+            return false;
+
+        money = newBalance;
+        UpdateMoneyText();
+        return true;
+    }
+
+    private void UpdateMoneyText()
+    {
+        if (moneyTxt != null)
+            moneyTxt.text = "$" + money;
+    }
 }

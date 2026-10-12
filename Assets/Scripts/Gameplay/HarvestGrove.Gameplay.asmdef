@@ -1,0 +1,7 @@
+{
+    "name": "HarvestGrove.Gameplay",
+    "rootNamespace": "HarvestGrove.Gameplay",
+    "references": [],
+    "autoReferenced": true,
+    "noEngineReferences": true
+}

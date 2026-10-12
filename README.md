@@ -1,75 +1,52 @@
-# 🌱 Harvest Grove
+# Harvest Grove
 
-**Harvest Grove** is a 2D farming game prototype developed with **Unity and C#**.
+A small 2D farming prototype built with Unity and C#. Plant crops, water plots,
+wait for growth and harvest to earn money for more crops and land.
 
-The project demonstrates my practical experience working with Unity gameplay systems, UI, prefabs, ScriptableObjects, interaction logic and basic game economy systems.
+## Features
 
-## 🎮 Gameplay Systems
+- Five crop types configured with ScriptableObjects: sprites, growth intervals and prices.
+- Watering, staged growth and fertilizer that increases growth speed up to 2×.
+- Crop selection, a store and a shared balance for planting and plot purchases.
+- Isometric plots, sprite interaction and TextMesh Pro UI.
 
-- Planting crops
-- Multiple crop growth stages
-- Harvesting
-- Watering farm plots
-- Fertilizer / growth-speed mechanics
-- Purchasing additional farm plots
-- Store system
-- Currency system
-- Plant selection
-- Interactive farm plots
-- Isometric object sorting
+## Run
 
-## 🧩 Unity Systems Used
+1. Clone this repository.
+2. Install **Unity 2021.3.45f2** through Unity Hub, matching
+   `ProjectSettings/ProjectVersion.txt`.
+3. Add the repository folder as a project and let Unity restore its packages.
+4. Open `Assets/Scenes/SampleScene.unity` and enter Play mode.
 
-- GameObjects & Components
-- MonoBehaviour
-- Prefabs
-- ScriptableObjects
-- SpriteRenderer
-- BoxCollider2D
-- Unity UI
-- TextMesh Pro
-- Mouse interaction
-- Time-based gameplay logic
+Use the store's **Buy** button to select a crop, then click an owned empty plot.
+Select the water, fertilizer or plot tool and click a plot to use it. Selecting
+an active crop or tool again cancels it. With no selection, click a mature crop
+to harvest.
 
-## 🌾 ScriptableObject Plant System
+Fertilizer costs $10 per application, with at most five applications per crop.
+It only applies to growing crops. Additional plots cost $100. Game state is
+kept in memory and resets when Play mode stops; there is no save system.
 
-Plant data is stored using **ScriptableObjects**.
+## Tests
 
-Each plant can contain:
+The growth and balance rules are tested independently of Unity. In the editor,
+open **Window → General → Test Runner** and run the EditMode tests.
 
-- Growth-stage sprites
-- Growth time
-- Buy price
-- Sell price
+The same tests can run without the editor using the **.NET 10 SDK**:
 
-This separates gameplay data from logic and makes different crop types easier to create and configure.
+```sh
+dotnet restore Tests/Gameplay/Gameplay.Tests.csproj --locked-mode
+dotnet test Tests/Gameplay/Gameplay.Tests.csproj --no-restore
+```
 
-## 💰 Gameplay Loop
+GitHub Actions runs these rules tests. They cover watering, growth timing,
+fertilizer limits, affordability and balance bounds; they do not validate
+Unity rendering, scene import or input. See [validation notes](docs/VALIDATION.md).
 
-1. Select a crop
-2. Purchase and plant it
-3. Water the farm plot
-4. Wait for the crop to grow
-5. Use fertilizer if needed
-6. Harvest the crop
-7. Receive currency
-8. Purchase more crops or farm plots
+## Structure
 
-## 🛠 Technologies
+`Assets/Scripts` contains scene components. `Gameplay` contains engine-independent
+growth and economy rules. Crop definitions are in `Assets/Resources/Plants`;
+scene and UI assets are under `Assets/Scenes` and `Assets/Prefabs`.
 
-- Unity
-- C#
-- ScriptableObjects
-- Prefabs
-- TextMesh Pro
-- Unity 2D Physics
-
-## 🎯 What I Learned
-
-This project gave me practical experience working inside a real-time game engine and helped me understand how game assets, UI, gameplay logic, data and interactions work together in a Unity project.
-
----
-
-🎨 [3D Art Portfolio](https://dima-nesvitailo.artstation.com)
-
-👤 [GitHub Profile](https://github.com/dima1sik)
+Lilita One and VT323 font licenses are included in [Assets/Fonts](Assets/Fonts).
